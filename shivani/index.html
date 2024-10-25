@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quarterly Sales Data Table and Chart</title>
+    <style>
+        /* Table styling */
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        /* Canvas styling */
+        canvas {
+            margin-top: 20px;
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Quarterly Sales Data Table and Chart</h1>
+
+    <!-- Button to load JSON data -->
+    <button onclick="loadJSON()">Load JSON Data</button>
+
+    <!-- Table to display JSON data -->
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Q1</th>
+                <th>Q2</th>
+                <th>Q3</th>
+                <th>Q4</th>
+                <th>Total Sales</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <!-- Canvas for drawing the chart -->
+    <canvas id="salesChart" width="500" height="400"></canvas>
+
+    <script>
+       function loadJSON() {
+    fetch('data.json')  // Ensure the path is correct
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            processJSON(data);
+        })
+        .catch(error => console.error('There has been a problem with your fetch operation:', error));
+}
+
+
+        // Function to process the JSON data and display it in a table
+        function processJSON(data) {
+            const tableBody = document.querySelector('#dataTable tbody');
+            tableBody.innerHTML = ''; // Clear previous table rows
+
+            const chartData = [];
+
+            // Iterate over the JSON data
+            data.categories.forEach(item => {
+                const totalSales = item.Q1 + item.Q2 + item.Q3 + item.Q4;
+
+                // Add to the table
+                const row = document.createElement('tr');
+                const categoryCell = document.createElement('td');
+                const q1Cell = document.createElement('td');
+                const q2Cell = document.createElement('td');
+                const q3Cell = document.createElement('td');
+                const q4Cell = document.createElement('td');
+                const totalCell = document.createElement('td');
+                
+                categoryCell.textContent = item.name;
+                q1Cell.textContent = item.Q1;
+                q2Cell.textContent = item.Q2;
+                q3Cell.textContent = item.Q3;
+                q4Cell.textContent = item.Q4;
+                totalCell.textContent = totalSales;
+
+                row.appendChild(categoryCell);
+                row.appendChild(q1Cell);
+                row.appendChild(q2Cell);
+                row.appendChild(q3Cell);
+                row.appendChild(q4Cell);
+                row.appendChild(totalCell);
+                tableBody.appendChild(row);
+
+                // Collect data for the chart
+                chartData.push({ name: item.name, total: totalSales });
+            });
+
+            // Draw the chart after table generation
+            drawSalesChart(chartData);
+        }
+
+        // Function to draw a bar chart showing total sales using canvas
+        function drawSalesChart(data) {
+            const canvas = document.getElementById('salesChart');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+
+            const maxValue = Math.max(...data.map(item => item.total));
+            const barWidth = 50;
+            const chartHeight = 300;
+            const maxBarHeight = 250;
+            const xOffset = 50;
+
+            // Draw bars
+            data.forEach((item, index) => {
+                const barHeight = (item.total / maxValue) * maxBarHeight;
+                const x = xOffset + index * (barWidth + 20);
+                const y = chartHeight - barHeight;
+
+                // Draw the bar
+                ctx.fillStyle = '#4CAF50';
+                ctx.fillRect(x, y, barWidth, barHeight);
+
+                // Draw labels
+                ctx.fillStyle = '#000';
+                ctx.font = '14px Arial';
+                ctx.fillText(item.name, x + 10, chartHeight + 20); // Category label
+                ctx.fillText(item.total, x + 15, y - 10); // Total sales label
+            });
+        }
+    </script>
+</body>
+</html>
